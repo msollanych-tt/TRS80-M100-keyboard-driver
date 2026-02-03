@@ -135,10 +135,30 @@ func (s *Scanner) scanMatrix() {
 			continue
 		}
 
-		// Check each column
+		// Check each column for state changes
 		for colIdx, value := range colValues {
-			if value == 1 {
+			keyID := fmt.Sprintf("%d:%d", rowIdx, colIdx)
+			s.mu.Lock()
+			state, exists := s.keyStates[keyID]
+			if !exists {
+				state = &KeyState{Pressed: false}
+				s.keyStates[keyID] = state
+			}
+
+			// Detect key state transitions
+			if value == 1 && !state.Pressed {
+				// LOW->HIGH: Key just pressed
+				state.Pressed = true
+				s.mu.Unlock()
 				s.handleKeyPress(rowIdx, colIdx)
+			} else if value == 0 && state.Pressed {
+				// HIGH->LOW: Key just released
+				state.Pressed = false
+				s.mu.Unlock()
+				slog.Debug("Key released", "row", rowIdx, "col", colIdx)
+			} else {
+				// No state change
+				s.mu.Unlock()
 			}
 		}
 
@@ -158,31 +178,10 @@ func (s *Scanner) setRow(rowIdx, value int) {
 	}
 }
 
-// handleKeyPress handles a detected key press
+// handleKeyPress handles a detected key press (only called on key down transition)
 func (s *Scanner) handleKeyPress(row, col int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	keyID := fmt.Sprintf("%d:%d", row, col)
-	now := time.Now()
-
-	// Get or create key state
-	state, exists := s.keyStates[keyID]
-	if !exists {
-		state = &KeyState{}
-		s.keyStates[keyID] = state
-	}
-
-	// Check if this is too soon after the last press (key repeat prevention)
-	if exists && now.Sub(state.LastPress) < s.config.KeyRepeatDelay {
-		slog.Debug("Key repeat too fast, ignoring", "row", row, "col", col,
-			"since_last", now.Sub(state.LastPress))
-		return
-	}
-
-	// Update state
-	state.LastPress = now
-	state.Pressed = true
 
 	// Handle modifier keys
 	if s.handleModifier(row, col) {
