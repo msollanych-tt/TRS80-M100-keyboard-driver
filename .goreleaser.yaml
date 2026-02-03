@@ -1,0 +1,84 @@
+# GoReleaser configuration for TRS-80 M100 Keyboard Driver
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: m100keyboard
+    main: ./cmd/m100keyboard
+    binary: m100keyboard
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - arm64
+      - arm
+    goarm:
+      - "7"
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - LICENSE
+      - INSTALL.md
+      - README.md
+      - systemd/m100keyboard.service
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: msollanych-tt
+    name: TRS80-M100-keyboard-driver
+  draft: false
+  prerelease: auto
+  name_template: "v{{.Version}}"
+
+nfpms:
+  - id: m100keyboard
+    package_name: m100keyboard
+    vendor: Mike Sollanych
+    homepage: https://github.com/msollanych-tt/TRS80-M100-keyboard-driver
+    maintainer: Mike Sollanych
+    description: TRS-80 Model 100 keyboard driver for Raspberry Pi
+    license: See LICENSE file
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/local/bin
+    contents:
+      - src: systemd/m100keyboard.service
+        dst: /etc/systemd/system/m100keyboard.service
+        type: config
+    scripts:
+      postinstall: scripts/postinstall.sh
+      preremove: scripts/preremove.sh
