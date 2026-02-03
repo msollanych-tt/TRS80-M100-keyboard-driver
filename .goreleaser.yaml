@@ -1,6 +1,4 @@
 # GoReleaser configuration for TRS-80 M100 Keyboard Driver
-version: 2
-
 before:
   hooks:
     - go mod tidy
