@@ -31,6 +31,22 @@ func (d *Device) EmitKey(key int) error {
 	return nil
 }
 
+// KeyDown sends a key down event (for modifiers that stay pressed)
+func (d *Device) KeyDown(key int) error {
+	if err := d.kb.KeyDown(key); err != nil {
+		return fmt.Errorf("failed to press key %d: %w", key, err)
+	}
+	return nil
+}
+
+// KeyUp sends a key up event (for releasing held keys)
+func (d *Device) KeyUp(key int) error {
+	if err := d.kb.KeyUp(key); err != nil {
+		return fmt.Errorf("failed to release key %d: %w", key, err)
+	}
+	return nil
+}
+
 // EmitCombo sends a key combination (e.g., Ctrl+C)
 func (d *Device) EmitCombo(modifiers []int, key int) error {
 	// Press all modifiers

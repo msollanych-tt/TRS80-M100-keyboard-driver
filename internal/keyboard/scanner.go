@@ -246,15 +246,28 @@ func (s *Scanner) handleKeyRelease(row, col int) {
 		// Rows 0, 4, 5, 6 all have Shift in column 8
 		s.shift = false
 		slog.Debug("Shift key released", "row", row)
+		// Emit the actual shift key up event
+		if err := s.device.KeyUp(KeyMatrix[row][col]); err != nil {
+			slog.Error("Failed to emit shift key up", "error", err)
+		}
 	case row == CtrlRow && col == CtrlCol:
 		s.ctrl = false
 		slog.Debug("Ctrl key released")
+		// Emit the actual ctrl key up event
+		if err := s.device.KeyUp(KeyMatrix[row][col]); err != nil {
+			slog.Error("Failed to emit ctrl key up", "error", err)
+		}
 	case row == AltRow && col == AltCol:
 		s.alt = false
 		slog.Debug("Alt key released")
+		// Emit the actual alt key up event
+		if err := s.device.KeyUp(KeyMatrix[row][col]); err != nil {
+			slog.Error("Failed to emit alt key up", "error", err)
+		}
 	case row == CodeRow && col == CodeCol:
 		s.code = false
 		slog.Debug("Code key released")
+		// CODE key is special - don't emit it
 	default:
 		// Regular key released - just log it
 		slog.Debug("Key released", "row", row, "col", col)
@@ -268,18 +281,31 @@ func (s *Scanner) handleModifier(row, col int) bool {
 		// Rows 0, 4, 5, 6 all have Shift in column 8
 		s.shift = true
 		slog.Debug("Shift key detected", "row", row)
+		// Emit the actual shift key down event
+		if err := s.device.KeyDown(KeyMatrix[row][col]); err != nil {
+			slog.Error("Failed to emit shift key down", "error", err)
+		}
 		return true
 	case row == CtrlRow && col == CtrlCol:
 		s.ctrl = true
 		slog.Debug("Ctrl key detected")
+		// Emit the actual ctrl key down event
+		if err := s.device.KeyDown(KeyMatrix[row][col]); err != nil {
+			slog.Error("Failed to emit ctrl key down", "error", err)
+		}
 		return true
 	case row == AltRow && col == AltCol:
 		s.alt = true
 		slog.Debug("Alt key detected")
+		// Emit the actual alt key down event
+		if err := s.device.KeyDown(KeyMatrix[row][col]); err != nil {
+			slog.Error("Failed to emit alt key down", "error", err)
+		}
 		return true
 	case row == CodeRow && col == CodeCol:
 		s.code = true
 		slog.Debug("Code key detected")
+		// CODE key is special - don't emit it
 		return true
 	}
 	return false

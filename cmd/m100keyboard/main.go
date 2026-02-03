@@ -11,7 +11,7 @@ import (
 	"github.com/msollanych-tt/TRS80-M100-keyboard-driver/internal/keyboard"
 )
 
-const version = "0.1.0"
+const version = "0.1.1"
 
 func main() {
 	// Parse configuration
