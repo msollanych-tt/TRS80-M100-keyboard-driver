@@ -135,6 +135,12 @@ func (s *Scanner) scanMatrix() {
 			continue
 		}
 
+		// IMPORTANT: Pre-scan for modifiers in this row BEFORE processing keys
+		// This ensures Shift+A works (A is col 1, Shift is col 8)
+		rowHasShift := colValues[ShiftCol] == 1 && (rowIdx == 0 || rowIdx == 4 || rowIdx == 5 || rowIdx == 6)
+		rowHasCtrl := rowIdx == CtrlRow && colValues[CtrlCol] == 1
+		rowHasAlt := rowIdx == AltRow && colValues[AltCol] == 1
+
 		// Check each column for state changes
 		for colIdx, value := range colValues {
 			keyID := fmt.Sprintf("%d:%d", rowIdx, colIdx)
@@ -147,6 +153,17 @@ func (s *Scanner) scanMatrix() {
 
 			// Detect key state transitions
 			if value == 1 && !state.Pressed {
+				// Set modifiers from current row scan before emitting regular keys
+				if rowHasShift {
+					s.shift = true
+				}
+				if rowHasCtrl {
+					s.ctrl = true
+				}
+				if rowHasAlt {
+					s.alt = true
+				}
+
 				// LOW->HIGH: Key just pressed
 				state.Pressed = true
 				s.mu.Unlock()
