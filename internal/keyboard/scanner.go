@@ -155,7 +155,7 @@ func (s *Scanner) scanMatrix() {
 				// HIGH->LOW: Key just released
 				state.Pressed = false
 				s.mu.Unlock()
-				slog.Debug("Key released", "row", rowIdx, "col", colIdx)
+				s.handleKeyRelease(rowIdx, colIdx)
 			} else {
 				// No state change
 				s.mu.Unlock()
@@ -210,22 +210,47 @@ func (s *Scanner) handleKeyPress(row, col int) {
 		slog.Error("Failed to emit key", "error", err)
 	}
 
-	// Clear modifier states after use
-	s.shift = false
-	s.ctrl = false
-	s.alt = false
+	// Only clear CODE key (it's one-shot)
+	// Shift, Ctrl, Alt stay active until released
 	s.code = false
 
 	// Post-key delay
 	time.Sleep(s.config.PostKeyDelay)
 }
 
+// handleKeyRelease handles a detected key release
+func (s *Scanner) handleKeyRelease(row, col int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Check if this is a modifier key being released
+	switch {
+	case col == ShiftCol && (row == 0 || row == 4 || row == 5 || row == 6):
+		// Rows 0, 4, 5, 6 all have Shift in column 8
+		s.shift = false
+		slog.Debug("Shift key released", "row", row)
+	case row == CtrlRow && col == CtrlCol:
+		s.ctrl = false
+		slog.Debug("Ctrl key released")
+	case row == AltRow && col == AltCol:
+		s.alt = false
+		slog.Debug("Alt key released")
+	case row == CodeRow && col == CodeCol:
+		s.code = false
+		slog.Debug("Code key released")
+	default:
+		// Regular key released - just log it
+		slog.Debug("Key released", "row", row, "col", col)
+	}
+}
+
 // handleModifier checks if this is a modifier key and updates state
 func (s *Scanner) handleModifier(row, col int) bool {
 	switch {
-	case row == ShiftRow1 && col == ShiftCol:
+	case col == ShiftCol && (row == 0 || row == 4 || row == 5 || row == 6):
+		// Rows 0, 4, 5, 6 all have Shift in column 8
 		s.shift = true
-		slog.Debug("Shift key detected")
+		slog.Debug("Shift key detected", "row", row)
 		return true
 	case row == CtrlRow && col == CtrlCol:
 		s.ctrl = true
