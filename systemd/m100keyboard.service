@@ -1,0 +1,25 @@
+[Unit]
+Description=TRS-80 Model 100 Keyboard Driver
+Documentation=https://github.com/msollanych-tt/TRS80-M100-keyboard-driver
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/m100keyboard
+Restart=on-failure
+RestartSec=5s
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/dev/uinput
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=m100keyboard
+
+[Install]
+WantedBy=multi-user.target
