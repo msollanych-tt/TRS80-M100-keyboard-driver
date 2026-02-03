@@ -120,7 +120,7 @@ func (s *Scanner) Run(ctx context.Context) error {
 func (s *Scanner) scanMatrix() {
 	pinCfg := DefaultPinConfig()
 
-	for rowIdx, rowPin := range pinCfg.RowPins {
+	for rowIdx := range pinCfg.RowPins {
 		// Set this row high
 		s.setRow(rowIdx, 1)
 
